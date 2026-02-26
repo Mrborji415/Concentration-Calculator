@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -8,12 +8,29 @@
     :root {
       --bg: #f7f4ee;
       --card: #fffaf0;
+      --surface: #ffffff;
       --ink: #182028;
       --muted: #6b7280;
       --line: #ddd3bf;
       --accent: #0f766e;
       --accent-2: #f59e0b;
       --danger: #b91c1c;
+      --nav-bg: #f4ecdc;
+      --focus: #99f6e4;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --surface: #0b1220;
+      --ink: #e5e7eb;
+      --muted: #9ca3af;
+      --line: #334155;
+      --accent: #14b8a6;
+      --accent-2: #fbbf24;
+      --danger: #f87171;
+      --nav-bg: #1f2937;
+      --focus: #22d3ee;
     }
 
     * { box-sizing: border-box; }
@@ -28,6 +45,7 @@
         var(--bg);
       min-height: 100vh;
       padding: 24px;
+      transition: background-color 160ms ease, color 160ms ease;
     }
 
     .wrap {
@@ -46,6 +64,32 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    .navbar {
+      display: flex;
+      gap: 8px;
+      background: var(--nav-bg);
+      border: 1px solid var(--line);
+      padding: 8px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+
+    .nav-btn {
+      width: auto;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    .nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
     h1 {
       margin: 0 0 8px;
       font-size: 1.9rem;
@@ -55,6 +99,14 @@
     p {
       margin: 0 0 18px;
       color: var(--muted);
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
     }
 
     .grid {
@@ -76,10 +128,12 @@
       border: 1px solid var(--line);
       padding: 10px 12px;
       font: inherit;
+      color: var(--ink);
+      background: var(--surface);
     }
 
-    input:focus, select:focus {
-      outline: 2px solid #99f6e4;
+    input:focus, select:focus, button:focus {
+      outline: 2px solid var(--focus);
       border-color: var(--accent);
     }
 
@@ -97,6 +151,7 @@
 
     .secondary {
       background: #374151;
+      color: #fff;
     }
 
     .table {
@@ -136,7 +191,7 @@
       border: 1px dashed var(--line);
       border-radius: 12px;
       padding: 14px;
-      background: #fff;
+      background: var(--surface);
     }
 
     .score {
@@ -151,62 +206,130 @@
       margin-top: 8px;
     }
 
+    .settings-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: var(--surface);
+      max-width: 420px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .toggle {
+      appearance: none;
+      width: 52px;
+      height: 30px;
+      border-radius: 999px;
+      background: #9ca3af;
+      position: relative;
+      padding: 0;
+      border: 1px solid transparent;
+      transition: background-color 150ms ease;
+    }
+
+    .toggle::before {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 150ms ease;
+    }
+
+    .toggle:checked {
+      background: var(--accent);
+    }
+
+    .toggle:checked::before {
+      transform: translateX(22px);
+    }
+
     @media (max-width: 700px) {
       .grid, .actions { grid-template-columns: 1fr; }
       h1 { font-size: 1.5rem; }
+      .navbar { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <h1>Screen Time Concentration Calculator</h1>
-    <p>Enter your daily screen time, add the apps you used, then calculate your concentration percent.</p>
+    <nav class="navbar" aria-label="Main navigation">
+      <button id="navCalc" class="nav-btn active" type="button">Calculator</button>
+      <button id="navSettings" class="nav-btn" type="button">Settings</button>
+    </nav>
 
-    <section class="grid">
-      <div>
-        <label for="total">Total screen time (minutes)</label>
-        <input id="total" type="number" min="1" placeholder="e.g. 360" />
+    <section id="calculatorPage" class="page active">
+      <h1>Screen Time Concentration Calculator</h1>
+      <p>Enter your daily screen time, add the apps you used, then calculate your concentration percent.</p>
+
+      <section class="grid">
+        <div>
+          <label for="total">Total screen time (minutes)</label>
+          <input id="total" type="number" min="1" placeholder="e.g. 360" />
+        </div>
+        <div>
+          <label for="app">App name</label>
+          <input id="app" type="text" placeholder="e.g. YouTube" />
+        </div>
+        <div>
+          <label for="minutes">Time on this app (minutes)</label>
+          <input id="minutes" type="number" min="1" placeholder="e.g. 90" />
+        </div>
+        <div>
+          <label for="kind">App type</label>
+          <select id="kind">
+            <option value="productive">Productive</option>
+            <option value="distracting">Distracting</option>
+          </select>
+        </div>
+      </section>
+
+      <button id="addBtn" type="button">Add App</button>
+      <p>It's better to add your top 3 used apps.</p>
+      <table class="table" id="appsTable" aria-label="Apps list">
+        <thead>
+          <tr>
+            <th>App</th>
+            <th>Minutes</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="actions">
+        <button id="calcBtn" type="button">Compute Concentration %</button>
+        <button id="clearBtn" class="secondary" type="button">Clear All</button>
       </div>
-      <div>
-        <label for="app">App name</label>
-        <input id="app" type="text" placeholder="e.g. YouTube" />
-      </div>
-      <div>
-        <label for="minutes">Time on this app (minutes)</label>
-        <input id="minutes" type="number" min="1" placeholder="e.g. 90" />
-      </div>
-      <div>
-        <label for="kind">App type</label>
-        <select id="kind">
-          <option value="productive">Productive</option>
-          <option value="distracting">Distracting</option>
-        </select>
-      </div>
+
+      <section class="result" id="resultBox">
+        <div><strong>Concentration score</strong></div>
+        <div class="score" id="score">0%</div>
+        <div id="summary">Add apps and calculate. If total time is empty, we'll use the sum of app minutes.</div>
+        <div class="warning" id="warning"></div>
+      </section>
     </section>
 
-    <button id="addBtn" type="button">Add App</button>
-    <p>It's better to add your top 3 used apps.</p>
-    <table class="table" id="appsTable" aria-label="Apps list">
-      <thead>
-        <tr>
-          <th>App</th>
-          <th>Minutes</th>
-          <th>Type</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <div class="actions">
-      <button id="calcBtn" type="button">Compute Concentration %</button>
-      <button id="clearBtn" class="secondary" type="button">Clear All</button>
-    </div>
-
-    <section class="result" id="resultBox">
-      <div><strong>Concentration score</strong></div>
-      <div class="score" id="score">0%</div>
-      <div id="summary">Add apps and calculate. If total time is empty, we'll use the sum of app minutes.</div>
-      <div class="warning" id="warning"></div>
+    <section id="settingsPage" class="page" aria-label="Settings">
+      <h1>Settings</h1>
+      <p>Customize your view preferences.</p>
+      <div class="settings-card">
+        <div><strong>Appearance</strong></div>
+        <div class="toggle-row">
+          <label for="darkToggle" style="margin:0;">Dark theme</label>
+          <input id="darkToggle" class="toggle" type="checkbox" aria-label="Enable dark theme" />
+        </div>
+      </div>
     </section>
   </main>
 
@@ -224,7 +347,12 @@
       tbody: document.querySelector('#appsTable tbody'),
       score: document.getElementById('score'),
       summary: document.getElementById('summary'),
-      warning: document.getElementById('warning')
+      warning: document.getElementById('warning'),
+      navCalc: document.getElementById('navCalc'),
+      navSettings: document.getElementById('navSettings'),
+      calculatorPage: document.getElementById('calculatorPage'),
+      settingsPage: document.getElementById('settingsPage'),
+      darkToggle: document.getElementById('darkToggle')
     };
 
     function renderApps() {
@@ -296,6 +424,31 @@
       el.warning.textContent = '';
       renderApps();
     }
+
+    function showPage(page) {
+      const showingCalc = page === 'calculator';
+      el.calculatorPage.classList.toggle('active', showingCalc);
+      el.settingsPage.classList.toggle('active', !showingCalc);
+      el.navCalc.classList.toggle('active', showingCalc);
+      el.navSettings.classList.toggle('active', !showingCalc);
+    }
+
+    function setTheme(theme) {
+      const normalized = theme === 'dark' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', normalized);
+      el.darkToggle.checked = normalized === 'dark';
+      localStorage.setItem('theme', normalized);
+    }
+
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+
+    el.darkToggle.addEventListener('change', () => {
+      setTheme(el.darkToggle.checked ? 'dark' : 'light');
+    });
+
+    el.navCalc.addEventListener('click', () => showPage('calculator'));
+    el.navSettings.addEventListener('click', () => showPage('settings'));
 
     el.addBtn.addEventListener('click', addApp);
     el.calcBtn.addEventListener('click', computeScore);
