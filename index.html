@@ -214,6 +214,29 @@
       max-width: 420px;
     }
 
+    .insight-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: var(--surface);
+      margin-top: 12px;
+    }
+
+    .insight-title {
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+    }
+
+    .advice-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--ink);
+    }
+
+    .advice-list li {
+      margin: 6px 0;
+    }
+
     .toggle-row {
       display: flex;
       align-items: center;
@@ -265,6 +288,8 @@
   <main class="wrap">
     <nav class="navbar" aria-label="Main navigation">
       <button id="navCalc" class="nav-btn active" type="button">Calculator</button>
+      <button id="navWorld" class="nav-btn" type="button">Your Place in the World</button>
+      <button id="navAdvice" class="nav-btn" type="button">Advice</button>
       <button id="navSettings" class="nav-btn" type="button">Settings</button>
     </nav>
 
@@ -331,6 +356,26 @@
         </div>
       </div>
     </section>
+
+    <section id="worldPage" class="page" aria-label="Your place in the world">
+      <h1>Your Place in the World</h1>
+      <p>Your concentration level compared to a simple global benchmark.</p>
+      <div class="insight-card">
+        <h2 class="insight-title">Current standing</h2>
+        <p id="worldText">Calculate your concentration score first to see your standing.</p>
+      </div>
+    </section>
+
+    <section id="advicePage" class="page" aria-label="Advice">
+      <h1>Advice to Increase Concentration</h1>
+      <p>Actionable tips based on your current usage pattern.</p>
+      <div class="insight-card">
+        <h2 class="insight-title">Recommended next steps</h2>
+        <ul id="adviceList" class="advice-list">
+          <li>Add your apps and compute your score to get personalized advice.</li>
+        </ul>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -349,11 +394,19 @@
       summary: document.getElementById('summary'),
       warning: document.getElementById('warning'),
       navCalc: document.getElementById('navCalc'),
+      navWorld: document.getElementById('navWorld'),
+      navAdvice: document.getElementById('navAdvice'),
       navSettings: document.getElementById('navSettings'),
       calculatorPage: document.getElementById('calculatorPage'),
+      worldPage: document.getElementById('worldPage'),
+      advicePage: document.getElementById('advicePage'),
       settingsPage: document.getElementById('settingsPage'),
-      darkToggle: document.getElementById('darkToggle')
+      darkToggle: document.getElementById('darkToggle'),
+      worldText: document.getElementById('worldText'),
+      adviceList: document.getElementById('adviceList')
     };
+
+    let lastConcentration = 0;
 
     function renderApps() {
       el.tbody.innerHTML = '';
@@ -405,16 +458,19 @@
 
       const concentration = Math.max(0, Math.min(100, (productiveMinutes / total) * 100));
       const totalLabel = inferredTotal ? `${total} min (sum of apps)` : `${total} min`;
+      lastConcentration = concentration;
 
       el.score.textContent = concentration.toFixed(1) + '%';
       el.summary.textContent = `Productive: ${productiveMinutes} min | Tracked app time: ${usedMinutes} min | Total screen time: ${totalLabel}`;
       el.warning.textContent = !inferredTotal && usedMinutes > total
         ? 'Tracked app time is greater than total screen time. Check your entries.'
         : '';
+      refreshInsights();
     }
 
     function clearAll() {
       apps.length = 0;
+      lastConcentration = 0;
       el.total.value = '';
       el.app.value = '';
       el.minutes.value = '';
@@ -423,14 +479,74 @@
       el.summary.textContent = "Add apps and calculate. If total time is empty, we'll use the sum of app minutes.";
       el.warning.textContent = '';
       renderApps();
+      refreshInsights();
+    }
+
+    function setAdviceItems(items) {
+      el.adviceList.innerHTML = '';
+      for (const item of items) {
+        const li = document.createElement('li');
+        li.textContent = item;
+        el.adviceList.appendChild(li);
+      }
+    }
+
+    function refreshInsights() {
+      if (apps.length === 0) {
+        el.worldText.textContent = 'Calculate your concentration score first to see your standing.';
+        setAdviceItems(['Add your apps and compute your score to get personalized advice.']);
+        return;
+      }
+
+      const productiveMinutes = apps
+        .filter(a => a.kind === 'productive')
+        .reduce((sum, a) => sum + a.minutes, 0);
+      const usedMinutes = apps.reduce((sum, a) => sum + a.minutes, 0);
+      const distractingShare = usedMinutes > 0 ? ((usedMinutes - productiveMinutes) / usedMinutes) * 100 : 0;
+
+      let standingText = '';
+      if (lastConcentration >= 80) {
+        standingText = 'Top Focus Band: your pattern is stronger than most daily screen routines.';
+      } else if (lastConcentration >= 60) {
+        standingText = 'Solid Focus Band: better than average, with room to tighten distractions.';
+      } else if (lastConcentration >= 40) {
+        standingText = 'Middle Focus Band: close to average, small changes can move you up fast.';
+      } else {
+        standingText = 'Recovery Focus Band: below average right now, but this is fixable with structure.';
+      }
+      el.worldText.textContent = `${standingText} Current score: ${lastConcentration.toFixed(1)}%.`;
+
+      const tips = [];
+      if (distractingShare > 60) {
+        tips.push('Cut your most distracting app by 20-30 minutes tomorrow.');
+      }
+      if (lastConcentration < 60) {
+        tips.push('Schedule two 25-minute no-distraction focus blocks each day.');
+      }
+      tips.push('Keep social or video apps for a fixed evening window only.');
+      tips.push('Start your day with one productive app before opening any distracting app.');
+      if (tips.length > 4) tips.length = 4;
+      setAdviceItems(tips);
     }
 
     function showPage(page) {
-      const showingCalc = page === 'calculator';
-      el.calculatorPage.classList.toggle('active', showingCalc);
-      el.settingsPage.classList.toggle('active', !showingCalc);
-      el.navCalc.classList.toggle('active', showingCalc);
-      el.navSettings.classList.toggle('active', !showingCalc);
+      const pages = {
+        calculator: el.calculatorPage,
+        world: el.worldPage,
+        advice: el.advicePage,
+        settings: el.settingsPage
+      };
+      const buttons = {
+        calculator: el.navCalc,
+        world: el.navWorld,
+        advice: el.navAdvice,
+        settings: el.navSettings
+      };
+
+      Object.keys(pages).forEach((key) => {
+        pages[key].classList.toggle('active', key === page);
+        buttons[key].classList.toggle('active', key === page);
+      });
     }
 
     function setTheme(theme) {
@@ -448,11 +564,14 @@
     });
 
     el.navCalc.addEventListener('click', () => showPage('calculator'));
+    el.navWorld.addEventListener('click', () => showPage('world'));
+    el.navAdvice.addEventListener('click', () => showPage('advice'));
     el.navSettings.addEventListener('click', () => showPage('settings'));
 
     el.addBtn.addEventListener('click', addApp);
     el.calcBtn.addEventListener('click', computeScore);
     el.clearBtn.addEventListener('click', clearAll);
+    refreshInsights();
   </script>
 </body>
 </html>
