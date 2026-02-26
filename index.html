@@ -1,0 +1,303 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Screen Time Concentration Calculator</title>
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --card: #fffaf0;
+      --ink: #182028;
+      --muted: #6b7280;
+      --line: #ddd3bf;
+      --accent: #0f766e;
+      --accent-2: #f59e0b;
+      --danger: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, #fde68a 0%, transparent 28%),
+        radial-gradient(circle at 90% 80%, #99f6e4 0%, transparent 32%),
+        var(--bg);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      animation: rise 350ms ease-out;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.9rem;
+      letter-spacing: 0.3px;
+    }
+
+    p {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input, select, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid #99f6e4;
+      border-color: var(--accent);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); opacity: 0.9; }
+
+    .secondary {
+      background: #374151;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 0.95rem;
+    }
+
+    .table th,
+    .table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .productive { background: #d1fae5; color: #065f46; }
+    .distracting { background: #fee2e2; color: #991b1b; }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .result {
+      margin-top: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .score {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 6px 0;
+    }
+
+    .warning {
+      color: var(--danger);
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 700px) {
+      .grid, .actions { grid-template-columns: 1fr; }
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Screen Time Concentration Calculator</h1>
+    <p>Enter your daily screen time, add the apps you used, then calculate your concentration percent.</p>
+
+    <section class="grid">
+      <div>
+        <label for="total">Total screen time (minutes)</label>
+        <input id="total" type="number" min="1" placeholder="e.g. 360" />
+      </div>
+      <div>
+        <label for="app">App name</label>
+        <input id="app" type="text" placeholder="e.g. YouTube" />
+      </div>
+      <div>
+        <label for="minutes">Time on this app (minutes)</label>
+        <input id="minutes" type="number" min="1" placeholder="e.g. 90" />
+      </div>
+      <div>
+        <label for="kind">App type</label>
+        <select id="kind">
+          <option value="productive">Productive</option>
+          <option value="distracting">Distracting</option>
+        </select>
+      </div>
+    </section>
+
+    <button id="addBtn" type="button">Add App</button>
+
+    <table class="table" id="appsTable" aria-label="Apps list">
+      <thead>
+        <tr>
+          <th>App</th>
+          <th>Minutes</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="actions">
+      <button id="calcBtn" type="button">Compute Concentration %</button>
+      <button id="clearBtn" class="secondary" type="button">Clear All</button>
+    </div>
+
+    <section class="result" id="resultBox">
+      <div><strong>Concentration score</strong></div>
+      <div class="score" id="score">0%</div>
+      <div id="summary">Add apps and calculate.</div>
+      <div class="warning" id="warning"></div>
+    </section>
+  </main>
+
+  <script>
+    const apps = [];
+
+    const el = {
+      total: document.getElementById('total'),
+      app: document.getElementById('app'),
+      minutes: document.getElementById('minutes'),
+      kind: document.getElementById('kind'),
+      addBtn: document.getElementById('addBtn'),
+      calcBtn: document.getElementById('calcBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      tbody: document.querySelector('#appsTable tbody'),
+      score: document.getElementById('score'),
+      summary: document.getElementById('summary'),
+      warning: document.getElementById('warning')
+    };
+
+    function renderApps() {
+      el.tbody.innerHTML = '';
+      for (const item of apps) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.minutes}</td>
+          <td><span class="pill ${item.kind}">${item.kind}</span></td>
+        `;
+        el.tbody.appendChild(tr);
+      }
+    }
+
+    function addApp() {
+      const name = el.app.value.trim();
+      const minutes = Number(el.minutes.value);
+      const kind = el.kind.value;
+
+      if (!name || !Number.isFinite(minutes) || minutes <= 0) {
+        el.warning.textContent = 'Please enter a valid app name and minutes.';
+        return;
+      }
+
+      apps.push({ name, minutes, kind });
+      el.app.value = '';
+      el.minutes.value = '';
+      el.warning.textContent = '';
+      renderApps();
+    }
+
+    function computeScore() {
+      const total = Number(el.total.value);
+      if (!Number.isFinite(total) || total <= 0) {
+        el.warning.textContent = 'Please enter valid total screen time.';
+        return;
+      }
+
+      if (apps.length === 0) {
+        el.warning.textContent = 'Add at least one app first.';
+        return;
+      }
+
+      const productiveMinutes = apps
+        .filter(a => a.kind === 'productive')
+        .reduce((sum, a) => sum + a.minutes, 0);
+
+      const usedMinutes = apps.reduce((sum, a) => sum + a.minutes, 0);
+      const concentration = Math.max(0, Math.min(100, (productiveMinutes / total) * 100));
+
+      el.score.textContent = concentration.toFixed(1) + '%';
+      el.summary.textContent = `Productive: ${productiveMinutes} min | Tracked app time: ${usedMinutes} min | Total screen time: ${total} min`;
+      el.warning.textContent = usedMinutes > total
+        ? 'Tracked app time is greater than total screen time. Check your entries.'
+        : '';
+    }
+
+    function clearAll() {
+      apps.length = 0;
+      el.total.value = '';
+      el.app.value = '';
+      el.minutes.value = '';
+      el.kind.value = 'productive';
+      el.score.textContent = '0%';
+      el.summary.textContent = 'Add apps and calculate.';
+      el.warning.textContent = '';
+      renderApps();
+    }
+
+    el.addBtn.addEventListener('click', addApp);
+    el.calcBtn.addEventListener('click', computeScore);
+    el.clearBtn.addEventListener('click', clearAll);
+  </script>
+</body>
+</html>
