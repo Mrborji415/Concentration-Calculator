@@ -205,7 +205,7 @@
     <section class="result" id="resultBox">
       <div><strong>Concentration score</strong></div>
       <div class="score" id="score">0%</div>
-      <div id="summary">Add apps and calculate.</div>
+      <div id="summary">Add apps and calculate. If total time is empty, we'll use the sum of app minutes.</div>
       <div class="warning" id="warning"></div>
     </section>
   </main>
@@ -258,12 +258,6 @@
     }
 
     function computeScore() {
-      const total = Number(el.total.value);
-      if (!Number.isFinite(total) || total <= 0) {
-        el.warning.textContent = 'Please enter valid total screen time.';
-        return;
-      }
-
       if (apps.length === 0) {
         el.warning.textContent = 'Add at least one app first.';
         return;
@@ -274,11 +268,19 @@
         .reduce((sum, a) => sum + a.minutes, 0);
 
       const usedMinutes = apps.reduce((sum, a) => sum + a.minutes, 0);
+      let total = Number(el.total.value);
+      const inferredTotal = !Number.isFinite(total) || total <= 0;
+
+      if (inferredTotal) {
+        total = usedMinutes;
+      }
+
       const concentration = Math.max(0, Math.min(100, (productiveMinutes / total) * 100));
+      const totalLabel = inferredTotal ? `${total} min (sum of apps)` : `${total} min`;
 
       el.score.textContent = concentration.toFixed(1) + '%';
-      el.summary.textContent = `Productive: ${productiveMinutes} min | Tracked app time: ${usedMinutes} min | Total screen time: ${total} min`;
-      el.warning.textContent = usedMinutes > total
+      el.summary.textContent = `Productive: ${productiveMinutes} min | Tracked app time: ${usedMinutes} min | Total screen time: ${totalLabel}`;
+      el.warning.textContent = !inferredTotal && usedMinutes > total
         ? 'Tracked app time is greater than total screen time. Check your entries.'
         : '';
     }
@@ -290,7 +292,7 @@
       el.minutes.value = '';
       el.kind.value = 'productive';
       el.score.textContent = '0%';
-      el.summary.textContent = 'Add apps and calculate.';
+      el.summary.textContent = "Add apps and calculate. If total time is empty, we'll use the sum of app minutes.";
       el.warning.textContent = '';
       renderApps();
     }
